@@ -5,6 +5,19 @@ var logger = require('winston');
 var opt = require('optimist');
 var path = require('path');
 
+const https = require('https');
+const fs = require('fs');
+
+function letsencryptOptions(domain) {
+    const path = '/etc/letsencrypt/live/';
+    return {
+        key: fs.readFileSync(path + domain + '/privkey.pem'),
+        cert: fs.readFileSync(path + domain + '/cert.pem'),
+        ca: fs.readFileSync(path + domain + '/chain.pem')
+    };
+}
+
+
 var argv = require('optimist')
 	.describe('config', 'Location of the configuration file').default('config', './config.json')
 	.argv;
@@ -48,10 +61,14 @@ function loadConfig(configPath) {
 		res.render('index');
 	});
 
-	var server = http.createServer(app);
-	server.listen(config.port, function () {
-		logger.info('web server is now listening on ' +  server.address().address + ":" + server.address().port);
-	});
+	// var server = http.createServer(app);
+	// server.listen(config.port, function () {
+	// 	logger.info('web server is now listening on ' +  server.address().address + ":" + server.address().port);
+	// });
+	
+	const options = letsencryptOptions('www.fartgod.xyz');
+	var server = https.createServer(options,app);
+	server.listen(443,function());
 
 	return server;
 })();
